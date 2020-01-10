@@ -2,21 +2,38 @@
 %global moduledir %(pkg-config xorg-server --variable=moduledir )
 %global driverdir %{moduledir}/input
 
+#global gitdate 20101209
+%global gitversion 07232feb6
+
 Summary:    Xorg X11 vmmouse input driver
 Name:	    xorg-x11-drv-vmmouse
-Version:    12.7.0
-Release:    1%{?dist}
+Version:    12.9.0
+Release:    10%{?gitdate:.%{gitdate}git%{gitversion}}%{?dist}
 URL:	    http://www.x.org
 License:    MIT
 Group:	    User Interface/X Hardware Support
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
+%if 0%{?gitdate}
+Source0:    %{tarball}-%{gitdate}.tar.bz2
+Source1:    make-git-snapshot.sh
+Source2:    commitid
+%else
 Source0:    ftp://ftp.x.org/pub/individual/driver/%{tarball}-%{version}.tar.bz2
+%endif
+
+# 604660 - vmmouse_detect unexpected exit with status 0x000b
+Patch2:     vmmouse-12.6.9-iopl-revert.patch
+# don't mangle udev rules dir
+Patch3:     vmmouse-12.9.0-0001-Fetch-the-udev-dir-from-udev.pc-instead-of-guessing-.patch
+Patch4:     vmmouse-12.9.0-unsafe-logging.patch
 
 # Yes, this is not the same as vmware.  Yes, this is intentional.
 ExclusiveArch: %{ix86} x86_64
 
-BuildRequires: xorg-x11-server-sdk >= 1.10.0-1
+BuildRequires: xorg-x11-server-sdk >= 1.10.99.902
+BuildRequires: automake autoconf libtool
+BuildRequires: hal-devel
 
 Requires:  Xorg %(xserver-sdk-abi-requires ansic)
 Requires:  Xorg %(xserver-sdk-abi-requires xinput)
@@ -25,11 +42,15 @@ Requires:  Xorg %(xserver-sdk-abi-requires xinput)
 X.Org X11 vmmouse input driver.
 
 %prep
-%setup -q -n %{tarball}-%{version}
+%setup -q -n %{tarball}-%{?gitdate:%{gitdate}}%{!?gitdate:%{version}}
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
 
 %build
-%configure --disable-static --with-hal-callouts-dir=%{_bindir}
-make
+autoreconf -v --install --force || exit 1
+%configure --disable-static --disable-silent-rules --with-hal-callouts-dir=%{_bindir}
+make %{?_smp_mflags}
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -41,7 +62,7 @@ find $RPM_BUILD_ROOT -regex ".*\.la$" | xargs rm -f --
 
 # We don't ship .conf files
 rm $RPM_BUILD_ROOT%{_datadir}/X11/xorg.conf.d/50-vmmouse.conf
-rm $RPM_BUILD_ROOT/lib/udev/rules.d/69-xorg-vmmouse.rules
+# we build without udev.pc - udev rules aren't installed
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -56,6 +77,19 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/hal/fdi/policy/20thirdparty/11-x11-vmmouse.fdi
 
 %changelog
+* Thu Nov 01 2012 Peter Hutterer <peter.hutterer@redhat.com> - 12.9.0-10
+- Fix {?dist} tag (#871444)
+
+* Wed Aug 22 2012 Peter Hutterer <peter.hutterer@redhat.com> - 12.9.0-9
+- Rebuild for server 1.13 (#835262)
+
+* Tue Aug 21 2012 Peter Hutterer <peter.hutterer@redhat.com> 12.9.0-7
+- vmmouse-12.9.0-unsafe-logging.patch: Stifle some unsafe logging on the
+  read_input path.
+
+* Sun Aug 05 2012 Peter Hutterer <peter.hutterer@redhat.com> 12.9.0-6
+- Merge from F18 (#835262)
+
 * Wed Jun 29 2011 Peter Hutterer <peter.hutterer@redhat.com> 12.7.0-1
 - vmmouse 12.7.0 (#713841)
 
