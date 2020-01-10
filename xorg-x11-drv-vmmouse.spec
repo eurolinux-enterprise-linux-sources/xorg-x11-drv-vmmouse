@@ -4,29 +4,28 @@
 
 Summary:    Xorg X11 vmmouse input driver
 Name:	    xorg-x11-drv-vmmouse
-Version:    12.6.5
-Release:    3%{?dist}
+Version:    12.7.0
+Release:    1%{?dist}
 URL:	    http://www.x.org
 License:    MIT
 Group:	    User Interface/X Hardware Support
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Source0:    ftp://ftp.x.org/pub/individual/driver/%{tarball}-%{version}.tar.bz2
-Patch0:	    abi.patch
 
 # Yes, this is not the same as vmware.  Yes, this is intentional.
 ExclusiveArch: %{ix86} x86_64
 
-BuildRequires: xorg-x11-server-sdk >= 1.5.99.1-1
+BuildRequires: xorg-x11-server-sdk >= 1.10.0-1
 
-Requires: xorg-x11-server-Xorg >= 1.5.99.1-1
+Requires:  Xorg %(xserver-sdk-abi-requires ansic)
+Requires:  Xorg %(xserver-sdk-abi-requires xinput)
 
 %description 
 X.Org X11 vmmouse input driver.
 
 %prep
 %setup -q -n %{tarball}-%{version}
-%patch0 -p1 -b .abi
 
 %build
 %configure --disable-static --with-hal-callouts-dir=%{_bindir}
@@ -39,6 +38,10 @@ make install DESTDIR=$RPM_BUILD_ROOT
 # FIXME: Remove all libtool archives (*.la) from modules directory.  This
 # should be fixed in upstream Makefile.am or whatever.
 find $RPM_BUILD_ROOT -regex ".*\.la$" | xargs rm -f --
+
+# We don't ship .conf files
+rm $RPM_BUILD_ROOT%{_datadir}/X11/xorg.conf.d/50-vmmouse.conf
+rm $RPM_BUILD_ROOT/lib/udev/rules.d/69-xorg-vmmouse.rules
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -53,6 +56,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/hal/fdi/policy/20thirdparty/11-x11-vmmouse.fdi
 
 %changelog
+* Wed Jun 29 2011 Peter Hutterer <peter.hutterer@redhat.com> 12.7.0-1
+- vmmouse 12.7.0 (#713841)
+
 * Wed Jan 06 2010 Peter Hutterer <peter.hutterer@redhat.com> 12.6.5-3
 - Use global instead of define as per Packaging Guidelines
 
