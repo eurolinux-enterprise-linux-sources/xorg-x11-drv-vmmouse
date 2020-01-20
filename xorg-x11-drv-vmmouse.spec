@@ -7,8 +7,8 @@
 
 Summary:    Xorg X11 vmmouse input driver
 Name:	    xorg-x11-drv-vmmouse
-Version:    13.0.0
-Release:    12%{?gitdate:.%{gitdate}git%{gitversion}}%{?dist}
+Version:    13.1.0
+Release:    1%{?gitdate:.%{gitdate}git%{gitversion}}%{?dist}.1
 URL:	    http://www.x.org
 License:    MIT
 Group:	    User Interface/X Hardware Support
@@ -20,12 +20,6 @@ Source2:    commitid
 %else
 Source0:    ftp://ftp.x.org/pub/individual/driver/%{tarball}-%{version}.tar.bz2
 %endif
-
-# 604660 - vmmouse_detect unexpected exit with status 0x000b
-Patch2:     vmmouse-12.6.9-iopl-revert.patch
-
-# https://bugzilla.redhat.com/show_bug.cgi?id=1354636
-Patch3: 0001-Back-off-if-we-detect-a-vmmouse-kernel-driver-v3.patch
 
 # Yes, this is not the same as vmware.  Yes, this is intentional.
 ExclusiveArch: %{ix86} x86_64
@@ -42,12 +36,13 @@ X.Org X11 vmmouse input driver.
 
 %prep
 %setup -q -n %{tarball}-%{?gitdate:%{gitdate}}%{!?gitdate:%{version}}
-%patch2 -p1 
-%patch3 -p1
 
 %build
 autoreconf -v --install --force || exit 1
-%configure --disable-static --disable-silent-rules --with-xorg-conf-dir='%{_datadir}/X11/xorg.conf.d'
+%configure --disable-static \
+           --disable-silent-rules \
+           --with-xorg-conf-dir='%{_datadir}/X11/xorg.conf.d' \
+           --with-udev-rules-dir='%{_prefix}/lib/udev/rules.d'
 make %{?_smp_mflags}
 
 %install
@@ -75,6 +70,12 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/lib/udev/rules.d/*.rules
 
 %changelog
+* Wed May 30 2018 Adam Jackson <ajax@redhat.com> - 13.1.0-1.1
+- Rebuild for xserver 1.20
+
+* Thu Jan 26 2017 Peter Hutterer <peter.hutterer@redhat.com> 13.1.0-1
+- Rebase to 13.1.0 (#1401645)
+
 * Wed Sep 07 2016 Peter Hutterer <peter.hutterer@redhat.com> 13.0.0-12
 - Don't use vmmouse if the vmmouse kernel driver is detected (#1354636)
 
