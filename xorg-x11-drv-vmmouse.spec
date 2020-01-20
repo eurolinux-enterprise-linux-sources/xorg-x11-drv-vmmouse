@@ -8,7 +8,7 @@
 Summary:    Xorg X11 vmmouse input driver
 Name:	    xorg-x11-drv-vmmouse
 Version:    13.0.0
-Release:    10%{?gitdate:.%{gitdate}git%{gitversion}}%{?dist}
+Release:    11%{?gitdate:.%{gitdate}git%{gitversion}}%{?dist}
 URL:	    http://www.x.org
 License:    MIT
 Group:	    User Interface/X Hardware Support
@@ -70,6 +70,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/lib/udev/rules.d/*.rules
 
 %changelog
+* Fri May 01 2015 Peter Hutterer <peter.hutterer@redhat.com> 13.0.0-11
+- 1.17 ABI rebuild (#1194886)
+
 * Wed Jan 15 2014 Adam Jackson <ajax@redhat.com> - 13.0.0-10
 - 1.15 ABI rebuild
 
